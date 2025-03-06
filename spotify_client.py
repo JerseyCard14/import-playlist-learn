@@ -1,11 +1,14 @@
 import os
 import time
 import re
+import base64
+import requests
 from typing import List, Dict, Any, Optional, Tuple
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
 from difflib import SequenceMatcher
+import pandas as pd
 
 
 class SpotifyClient:
@@ -25,7 +28,7 @@ class SpotifyClient:
             raise ValueError("缺少Spotify API凭证。请在.env文件中设置SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET和SPOTIFY_REDIRECT_URI")
         
         # 设置权限范围
-        scope = "playlist-modify-public playlist-modify-private"
+        scope = "playlist-modify-public playlist-modify-private playlist-read-private ugc-image-upload"
         
         # 创建Spotify客户端
         self.sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
@@ -57,6 +60,110 @@ class SpotifyClient:
             description=description
         )
         return playlist['id']
+    
+    def get_user_playlists(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        获取用户的播放列表
+        
+        Args:
+            limit: 返回的播放列表数量限制
+            
+        Returns:
+            播放列表列表，每个包含id、name、description、tracks_total等信息
+        """
+        playlists = []
+        results = self.sp.current_user_playlists(limit=limit)
+        
+        for item in results['items']:
+            playlists.append({
+                'id': item['id'],
+                'name': item['name'],
+                'description': item['description'],
+                'public': item['public'],
+                'tracks_total': item['tracks']['total'],
+                'url': item['external_urls']['spotify'],
+                'images': item['images']
+            })
+        
+        return playlists
+    
+    def set_playlist_cover_image(self, playlist_id: str, image_path: str) -> bool:
+        """
+        设置播放列表封面图片
+        
+        Args:
+            playlist_id: 播放列表ID
+            image_path: 图片文件路径（JPEG格式）
+            
+        Returns:
+            是否成功设置
+        """
+        try:
+            # 读取图片文件
+            with open(image_path, 'rb') as image_file:
+                image_data = image_file.read()
+            
+            # 将图片转换为Base64编码
+            b64_image = base64.b64encode(image_data).decode('utf-8')
+            
+            # 设置播放列表封面
+            self.sp.playlist_upload_cover_image(playlist_id, b64_image)
+            return True
+        except Exception as e:
+            print(f"设置封面图片失败: {str(e)}")
+            return False
+    
+    def export_playlist_to_excel(self, playlist_id: str, output_path: str) -> bool:
+        """
+        导出播放列表到Excel文件
+        
+        Args:
+            playlist_id: 播放列表ID
+            output_path: 输出文件路径
+            
+        Returns:
+            是否成功导出
+        """
+        try:
+            # 获取播放列表信息
+            playlist = self.sp.playlist(playlist_id)
+            playlist_name = playlist['name']
+            
+            # 获取播放列表中的所有歌曲
+            tracks = []
+            results = playlist['tracks']
+            
+            while results:
+                for item in results['items']:
+                    if item['track']:
+                        track = item['track']
+                        tracks.append({
+                            'song_name': track['name'],
+                            'artist': ', '.join([artist['name'] for artist in track['artists']]),
+                            'album': track['album']['name'],
+                            'duration_ms': track['duration_ms'],
+                            'popularity': track['popularity'],
+                            'url': track['external_urls']['spotify'],
+                            'added_at': item['added_at']
+                        })
+                
+                # 获取下一页结果
+                if results['next']:
+                    results = self.sp.next(results)
+                else:
+                    results = None
+            
+            # 创建DataFrame并导出到Excel
+            df = pd.DataFrame(tracks)
+            
+            # 添加播放列表名称作为第一行
+            with pd.ExcelWriter(output_path) as writer:
+                df.to_excel(writer, sheet_name='Playlist', index=False)
+            
+            return True
+        except Exception as e:
+            print(f"导出播放列表失败: {str(e)}")
+            return False
     
     def search_track(self, song_name: str, artist: str = "", interactive: bool = False) -> Optional[str]:
         """

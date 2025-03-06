@@ -21,7 +21,47 @@ def parse_arguments():
     parser.add_argument('--preview', '-P', action='store_true', help='导入前预览歌曲列表')
     parser.add_argument('--no-preview', action='store_true', help='跳过预览直接导入')
     parser.add_argument('--interactive', '-i', action='store_true', help='启用交互式搜索（允许用户选择搜索结果）')
+    parser.add_argument('--existing', '-e', help='导入到现有播放列表的ID（可选）')
+    parser.add_argument('--cover', '-c', help='设置播放列表封面图片的文件路径（可选，JPEG格式）')
     return parser.parse_args()
+
+
+def select_playlist(spotify_client: SpotifyClient) -> str:
+    """
+    让用户选择一个现有的播放列表
+    
+    Args:
+        spotify_client: Spotify客户端实例
+        
+    Returns:
+        选择的播放列表ID，如果取消则返回空字符串
+    """
+    print("获取用户播放列表...")
+    playlists = spotify_client.get_user_playlists()
+    
+    if not playlists:
+        print("未找到播放列表")
+        return ""
+    
+    print(f"\n找到 {len(playlists)} 个播放列表:")
+    for i, playlist in enumerate(playlists):
+        print(f"{i+1:3d}. {playlist['name']} ({playlist['tracks_total']} 首歌曲)")
+    
+    # 让用户选择一个播放列表
+    try:
+        choice = input("\n请选择要导入到的播放列表 (1-{0}), 或输入 'n' 创建新播放列表: ".format(len(playlists))).strip()
+        if choice.lower() == 'n':
+            return ""
+        
+        choice_idx = int(choice) - 1
+        if 0 <= choice_idx < len(playlists):
+            return playlists[choice_idx]['id']
+        else:
+            print("无效的选择，将创建新播放列表")
+            return ""
+    except ValueError:
+        print("无效的输入，将创建新播放列表")
+        return ""
 
 
 def display_preview(songs: List[Dict[str, Any]], playlist_name: str, spotify_client: SpotifyClient = None) -> List[Dict[str, Any]]:
@@ -165,8 +205,17 @@ def main():
     args = parse_arguments()
     
     # 检查文件是否存在
+    if not args.file:
+        print("错误: 必须提供文件路径")
+        sys.exit(1)
+    
     if not os.path.exists(args.file):
         print(f"错误: 文件 '{args.file}' 不存在")
+        sys.exit(1)
+    
+    # 检查封面图片是否存在
+    if args.cover and not os.path.exists(args.cover):
+        print(f"错误: 封面图片文件 '{args.cover}' 不存在")
         sys.exit(1)
     
     try:
@@ -208,9 +257,32 @@ def main():
                 print("导入已取消")
                 sys.exit(0)
         
-        # 创建播放列表
-        print(f"正在创建{'私有' if args.private else '公开'}播放列表 '{playlist_name}'...")
-        playlist_id = spotify_client.create_playlist(playlist_name, playlist_description, not args.private)
+        # 确定播放列表ID
+        playlist_id = ""
+        if args.existing:
+            # 使用指定的现有播放列表
+            playlist_id = args.existing
+            try:
+                # 验证播放列表ID是否有效
+                playlist = spotify_client.sp.playlist(playlist_id)
+                playlist_name = playlist['name']
+                print(f"将导入到现有播放列表: '{playlist_name}'")
+            except Exception:
+                print(f"错误: 无法获取播放列表信息: {playlist_id}")
+                sys.exit(1)
+        elif input("是否导入到现有播放列表? (y/n): ").lower() == 'y':
+            # 让用户选择一个现有的播放列表
+            playlist_id = select_playlist(spotify_client)
+            if playlist_id:
+                # 获取播放列表信息
+                playlist = spotify_client.sp.playlist(playlist_id)
+                playlist_name = playlist['name']
+                print(f"将导入到现有播放列表: '{playlist_name}'")
+        
+        # 如果没有选择现有播放列表，则创建新的播放列表
+        if not playlist_id:
+            print(f"正在创建{'私有' if args.private else '公开'}播放列表 '{playlist_name}'...")
+            playlist_id = spotify_client.create_playlist(playlist_name, playlist_description, not args.private)
         
         # 搜索并添加歌曲
         print("正在搜索歌曲...")
@@ -250,11 +322,23 @@ def main():
         else:
             print("没有找到任何歌曲")
         
+        # 设置播放列表封面图片
+        if args.cover:
+            print(f"正在设置播放列表封面图片...")
+            if spotify_client.set_playlist_cover_image(playlist_id, args.cover):
+                print("封面图片设置成功!")
+            else:
+                print("封面图片设置失败")
+        
         # 显示未找到的歌曲
         if not_found:
             print(f"\n未找到 {len(not_found)} 首歌曲:")
             for song in not_found:
                 print(f"  - {song}")
+        
+        # 显示播放列表链接
+        playlist = spotify_client.sp.playlist(playlist_id)
+        print(f"\n播放列表链接: {playlist['external_urls']['spotify']}")
         
     except Exception as e:
         print(f"错误: {str(e)}")

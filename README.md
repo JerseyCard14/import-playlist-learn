@@ -11,6 +11,9 @@
   - 文本文件 (.txt)
 - 连接到 Spotify API
 - 在 Spotify 中创建新播放列表（公开或私有）
+- 导入到现有播放列表
+- 设置播放列表封面图片
+- 导出 Spotify 播放列表到 Excel
 - 使用增强的搜索算法查找歌曲
 - 交互式搜索，允许用户选择最佳匹配结果
 - 导入前预览和编辑歌曲列表
@@ -39,10 +42,10 @@
 5. 配置 `.env` 文件，添加您的 Spotify API 凭证
 6. 运行程序: `python import_playlist.py your_playlist.xlsx`
 
-### 命令行选项
+### 导入播放列表命令行选项
 
 ```
-usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] [--preview] [--no-preview] [--interactive] file
+usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] [--preview] [--no-preview] [--interactive] [--existing EXISTING] [--cover COVER] file
 
 将播放列表文件导入到Spotify
 
@@ -59,6 +62,24 @@ optional arguments:
   --preview, -P         导入前预览歌曲列表
   --no-preview          跳过预览直接导入
   --interactive, -i     启用交互式搜索（允许用户选择搜索结果）
+  --existing EXISTING, -e EXISTING
+                        导入到现有播放列表的ID（可选）
+  --cover COVER, -c COVER
+                        设置播放列表封面图片的文件路径（可选，JPEG格式）
+```
+
+### 导出播放列表命令行选项
+
+```
+usage: export_playlist.py [-h] [--output OUTPUT] [--id ID]
+
+将Spotify播放列表导出到Excel文件
+
+optional arguments:
+  -h, --help            显示帮助信息并退出
+  --output OUTPUT, -o OUTPUT
+                        输出文件路径（可选，默认为"playlist_名称.xlsx"）
+  --id ID, -i ID        播放列表ID（可选，如果不提供则显示用户的播放列表列表）
 ```
 
 ### 预览功能
@@ -89,6 +110,27 @@ optional arguments:
 ```
 
 这对于处理有多个版本的歌曲或名称相似的歌曲特别有用。
+
+### 导入到现有播放列表
+
+您可以通过以下方式将歌曲导入到现有播放列表：
+
+1. 使用 `--existing` 或 `-e` 选项指定播放列表ID
+2. 在导入过程中选择"是"，然后从列表中选择一个播放列表
+
+### 设置播放列表封面图片
+
+使用 `--cover` 或 `-c` 选项指定JPEG格式的图片文件路径，程序会将其设置为播放列表的封面图片。
+
+### 导出播放列表
+
+使用 `export_playlist.py` 脚本可以将Spotify播放列表导出到Excel文件：
+
+```
+python export_playlist.py
+```
+
+如果不提供播放列表ID，程序会显示您的播放列表列表，让您选择一个要导出的播放列表。
 
 ### 测试搜索功能
 
@@ -162,6 +204,7 @@ import-playlist-learn/
 ├── import_playlist.py    # 主程序
 ├── spotify_client.py     # Spotify API 客户端
 ├── file_reader.py        # 文件读取器
+├── export_playlist.py    # 播放列表导出工具
 ├── create_examples.py    # 示例文件生成器
 ├── test_search.py        # 搜索功能测试工具
 ├── examples/             # 示例文件目录
@@ -181,5 +224,8 @@ import-playlist-learn/
 - [x] 添加用户选择搜索结果的功能
 - [x] 添加私有/公开播放列表选项
 - [x] 添加导入前预览功能
+- [x] 支持导入到现有播放列表
+- [x] 支持设置播放列表封面图片
+- [x] 支持导出Spotify播放列表到Excel
 - [ ] 添加用户界面（可选）
 - [ ] 添加单元测试
