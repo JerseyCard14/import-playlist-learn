@@ -1,6 +1,6 @@
 # Spotify Playlist Importer
 
-一个将 Excel (.xls) 文件中的播放列表自动导入到 Spotify 账户的工具。这个项目主要用于学习编程知识。
+一个将 Excel (.xls) 文件中的播放列表自动导入到 Spotify 账户的工具。这个项目主要用于学习编程知识，使用个人账号开发。
 
 ## 功能
 
