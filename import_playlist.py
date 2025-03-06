@@ -5,15 +5,15 @@ import argparse
 from typing import List, Dict, Any
 from tqdm import tqdm
 
-from excel_reader import ExcelReader
+from file_reader import get_reader
 from spotify_client import SpotifyClient
 
 
 def parse_arguments():
     """解析命令行参数"""
-    parser = argparse.ArgumentParser(description='将Excel文件中的播放列表导入到Spotify')
-    parser.add_argument('file', help='Excel文件路径')
-    parser.add_argument('--name', '-n', help='播放列表名称（可选，默认使用Excel文件名）')
+    parser = argparse.ArgumentParser(description='将播放列表文件导入到Spotify')
+    parser.add_argument('file', help='播放列表文件路径 (支持 Excel, CSV, JSON, TXT 格式)')
+    parser.add_argument('--name', '-n', help='播放列表名称（可选，默认使用文件中的名称或文件名）')
     parser.add_argument('--description', '-d', help='播放列表描述（可选）')
     return parser.parse_args()
 
@@ -29,19 +29,29 @@ def main():
         sys.exit(1)
     
     try:
-        # 读取Excel文件
+        # 获取适合的文件读取器
         print(f"正在读取文件 '{args.file}'...")
-        excel_reader = ExcelReader(args.file)
-        songs = excel_reader.read_playlist()
+        try:
+            reader = get_reader(args.file)
+        except ValueError as e:
+            print(f"错误: {str(e)}")
+            sys.exit(1)
+        
+        # 读取播放列表数据
+        try:
+            songs = reader.read_playlist()
+        except Exception as e:
+            print(f"错误: {str(e)}")
+            sys.exit(1)
         
         if not songs:
-            print("错误: Excel文件中没有找到歌曲")
+            print("错误: 文件中没有找到歌曲")
             sys.exit(1)
         
         print(f"找到 {len(songs)} 首歌曲")
         
         # 获取播放列表名称
-        playlist_name = args.name if args.name else excel_reader.get_playlist_name()
+        playlist_name = args.name if args.name else reader.get_playlist_name()
         playlist_description = args.description if args.description else f"从 {os.path.basename(args.file)} 导入的播放列表"
         
         # 连接到Spotify

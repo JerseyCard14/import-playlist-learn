@@ -1,10 +1,14 @@
 # Spotify Playlist Importer
 
-一个将 Excel (.xls) 文件中的播放列表自动导入到 Spotify 账户的工具。这个项目主要用于学习编程知识，使用个人账号开发。
+一个将播放列表文件自动导入到 Spotify 账户的工具。支持多种文件格式，包括 Excel、CSV、JSON 和文本文件。这个项目主要用于学习编程知识，使用个人账号开发。
 
 ## 功能
 
-- 从 Excel 文件读取歌曲信息
+- 从多种格式的文件读取歌曲信息:
+  - Excel 文件 (.xlsx, .xls, .xlsm)
+  - CSV 文件 (.csv)
+  - JSON 文件 (.json)
+  - 文本文件 (.txt)
 - 连接到 Spotify API
 - 在 Spotify 中创建新播放列表
 - 搜索歌曲并添加到播放列表中
@@ -12,8 +16,9 @@
 ## 技术栈
 
 - Python
-- pandas/openpyxl (Excel 处理)
+- pandas/openpyxl (Excel/CSV 处理)
 - spotipy (Spotify API Python 客户端)
+- json (JSON 处理)
 
 ## 安装与使用
 
@@ -28,7 +33,44 @@
 3. 安装依赖: `pip install -r requirements.txt`
 4. 在 Spotify 开发者平台创建应用并获取 API 凭证
 5. 配置 `.env` 文件，添加您的 Spotify API 凭证
-6. 运行程序: `python import_playlist.py your_playlist.xls`
+6. 运行程序: `python import_playlist.py your_playlist.xlsx`
+
+## 支持的文件格式
+
+### Excel 文件 (.xlsx, .xls, .xlsm)
+需要包含 `song_name` 和 `artist` 列。
+
+### CSV 文件 (.csv)
+需要包含 `song_name` 和 `artist` 列。
+
+### JSON 文件 (.json)
+支持两种格式:
+1. 歌曲列表格式:
+   ```json
+   [
+     {"song_name": "歌曲1", "artist": "艺术家1"},
+     {"song_name": "歌曲2", "artist": "艺术家2"}
+   ]
+   ```
+
+2. 对象格式:
+   ```json
+   {
+     "name": "播放列表名称",
+     "songs": [
+       {"song_name": "歌曲1", "artist": "艺术家1"},
+       {"song_name": "歌曲2", "artist": "艺术家2"}
+     ]
+   }
+   ```
+
+### 文本文件 (.txt)
+每行一首歌，格式为 `歌曲名 - 艺术家`。
+第一行如果以 `# ` 开头，将被视为播放列表名称。
+
+## 生成示例文件
+
+运行 `python create_examples.py` 可以生成各种格式的示例文件，用于测试。
 
 ## 项目结构
 
@@ -36,23 +78,20 @@
 import-playlist-learn/
 ├── import_playlist.py    # 主程序
 ├── spotify_client.py     # Spotify API 客户端
-├── excel_reader.py       # Excel 文件读取器
+├── file_reader.py        # 文件读取器
+├── create_examples.py    # 示例文件生成器
+├── examples/             # 示例文件目录
 ├── requirements.txt      # 项目依赖
 └── README.md             # 项目说明
 ```
 
 ## 待办事项
 
-- [ ] 实现 Excel 文件读取
-- [ ] 实现 Spotify API 连接
-- [ ] 实现播放列表创建
-- [ ] 实现歌曲搜索和添加
-- [ ] 添加错误处理
 - [x] 实现 Excel 文件读取
 - [x] 实现 Spotify API 连接
 - [x] 实现播放列表创建
 - [x] 实现歌曲搜索和添加
 - [x] 添加错误处理
+- [x] 支持更多文件格式（CSV、JSON、TXT）
 - [ ] 添加用户界面（可选）
-- [ ] 支持更多文件格式（如CSV）
 - [ ] 添加单元测试
