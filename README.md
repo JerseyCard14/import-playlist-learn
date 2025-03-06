@@ -12,6 +12,7 @@
 - 连接到 Spotify API
 - 在 Spotify 中创建新播放列表（公开或私有）
 - 使用增强的搜索算法查找歌曲
+- 导入前预览和编辑歌曲列表
 - 搜索歌曲并添加到播放列表中
 
 ## 技术栈
@@ -40,7 +41,7 @@
 ### 命令行选项
 
 ```
-usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] file
+usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] [--preview] [--no-preview] file
 
 将播放列表文件导入到Spotify
 
@@ -54,7 +55,21 @@ optional arguments:
                         播放列表描述（可选）
   --private, -p         创建私有播放列表（默认为公开）
   --verbose, -v         显示详细信息
+  --preview, -P         导入前预览歌曲列表
+  --no-preview          跳过预览直接导入
 ```
+
+### 预览功能
+
+当歌曲数量超过5首时，程序默认会显示预览界面，您可以在导入前查看和编辑歌曲列表：
+
+- 查看所有歌曲
+- 删除不需要的歌曲
+- 添加新歌曲
+- 编辑现有歌曲
+- 测试搜索特定歌曲
+
+您也可以使用 `--preview` 选项强制显示预览，或使用 `--no-preview` 选项跳过预览直接导入。
 
 ### 测试搜索功能
 
@@ -138,5 +153,6 @@ import-playlist-learn/
 - [x] 支持更多文件格式（CSV、JSON、TXT）
 - [x] 实现模糊匹配搜索算法
 - [x] 添加私有/公开播放列表选项
+- [x] 添加导入前预览功能
 - [ ] 添加用户界面（可选）
 - [ ] 添加单元测试
