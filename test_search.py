@@ -10,6 +10,7 @@ def parse_arguments():
     parser.add_argument('song', help='歌曲名称')
     parser.add_argument('--artist', '-a', help='艺术家名称（可选）')
     parser.add_argument('--verbose', '-v', action='store_true', help='显示详细信息')
+    parser.add_argument('--interactive', '-i', action='store_true', help='启用交互式搜索（允许用户选择搜索结果）')
     return parser.parse_args()
 
 
@@ -25,6 +26,30 @@ def main():
         
         # 搜索歌曲
         print(f"正在搜索: {args.song}" + (f" - {args.artist}" if args.artist else ""))
+        
+        if args.interactive:
+            # 使用交互式搜索
+            print("\n使用交互式搜索:")
+            track_id = spotify_client.search_track(args.song, args.artist or "", interactive=True)
+            
+            if track_id:
+                # 获取歌曲详情
+                track = spotify_client.sp.track(track_id)
+                track_name = track['name']
+                track_artists = ", ".join([a['name'] for a in track['artists']])
+                track_album = track['album']['name']
+                track_url = track['external_urls']['spotify']
+                
+                print(f"\n选择的歌曲:")
+                print(f"歌曲名: {track_name}")
+                print(f"艺术家: {track_artists}")
+                print(f"专辑: {track_album}")
+                print(f"Spotify链接: {track_url}")
+                print(f"ID: {track_id}")
+            else:
+                print("\n未选择任何歌曲")
+            
+            sys.exit(0)
         
         if args.verbose:
             # 测试各种搜索策略
@@ -76,6 +101,18 @@ def main():
                 print(f"找到歌曲! ID: {track_id}")
             else:
                 print("未找到歌曲")
+            
+            # 获取多个搜索结果
+            print("\n获取多个搜索结果:")
+            results = spotify_client.get_search_results(song_name, artist, limit=5)
+            if results:
+                print(f"找到 {len(results)} 个结果:")
+                for i, track in enumerate(results):
+                    print(f"{i+1}. {track['name']} - {track['artists']} ({track['album']})")
+                    if 'score' in track:
+                        print(f"   相似度得分: {track['score']:.2f}")
+            else:
+                print("未找到任何结果")
         
         # 使用完整的搜索功能
         print("\n使用完整的搜索功能:")

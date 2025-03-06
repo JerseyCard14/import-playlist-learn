@@ -12,6 +12,7 @@
 - 连接到 Spotify API
 - 在 Spotify 中创建新播放列表（公开或私有）
 - 使用增强的搜索算法查找歌曲
+- 交互式搜索，允许用户选择最佳匹配结果
 - 导入前预览和编辑歌曲列表
 - 搜索歌曲并添加到播放列表中
 
@@ -41,7 +42,7 @@
 ### 命令行选项
 
 ```
-usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] [--preview] [--no-preview] file
+usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] [--preview] [--no-preview] [--interactive] file
 
 将播放列表文件导入到Spotify
 
@@ -57,6 +58,7 @@ optional arguments:
   --verbose, -v         显示详细信息
   --preview, -P         导入前预览歌曲列表
   --no-preview          跳过预览直接导入
+  --interactive, -i     启用交互式搜索（允许用户选择搜索结果）
 ```
 
 ### 预览功能
@@ -71,12 +73,35 @@ optional arguments:
 
 您也可以使用 `--preview` 选项强制显示预览，或使用 `--no-preview` 选项跳过预览直接导入。
 
+### 交互式搜索
+
+使用 `--interactive` 或 `-i` 选项启用交互式搜索功能。当搜索歌曲时，如果找到多个匹配结果，程序会显示这些结果并让您选择最合适的一个：
+
+```
+为 'Shape of You' - Ed Sheeran 找到多个结果:
+1. Shape of You - Ed Sheeran (÷ (Deluxe))
+2. Shape of You - Ed Sheeran (÷)
+3. Shape of You - Ed Sheeran (Shape of You)
+4. Shape of You - Acoustic - Ed Sheeran (Shape of You (Acoustic))
+5. Shape of You - Major Lazer Remix - Ed Sheeran (Shape of You (Major Lazer Remix))
+
+请选择一个结果 (1-5), 或输入 'n' 跳过:
+```
+
+这对于处理有多个版本的歌曲或名称相似的歌曲特别有用。
+
 ### 测试搜索功能
 
 您可以使用 `test_search.py` 脚本测试增强的搜索功能:
 
 ```
 python test_search.py "歌曲名" --artist "艺术家名" --verbose
+```
+
+或者使用交互式搜索:
+
+```
+python test_search.py "歌曲名" --artist "艺术家名" --interactive
 ```
 
 ## 增强的搜索算法
@@ -91,6 +116,7 @@ python test_search.py "歌曲名" --artist "艺术家名" --verbose
    - 分词搜索 (处理歌曲名可能包含艺术家的情况)
    - 模糊匹配搜索 (获取多个结果并比较相似度)
 3. **相似度评分** - 使用序列匹配算法计算相似度得分
+4. **用户选择** - 在交互式模式下，允许用户从多个搜索结果中选择最佳匹配
 
 ## 支持的文件格式
 
@@ -152,6 +178,7 @@ import-playlist-learn/
 - [x] 添加错误处理
 - [x] 支持更多文件格式（CSV、JSON、TXT）
 - [x] 实现模糊匹配搜索算法
+- [x] 添加用户选择搜索结果的功能
 - [x] 添加私有/公开播放列表选项
 - [x] 添加导入前预览功能
 - [ ] 添加用户界面（可选）

@@ -58,13 +58,14 @@ class SpotifyClient:
         )
         return playlist['id']
     
-    def search_track(self, song_name: str, artist: str = "") -> Optional[str]:
+    def search_track(self, song_name: str, artist: str = "", interactive: bool = False) -> Optional[str]:
         """
         在Spotify上搜索歌曲，使用增强的搜索算法
         
         Args:
             song_name: 歌曲名称
             artist: 艺术家名称（可选）
+            interactive: 是否启用交互式选择（当有多个结果时）
             
         Returns:
             歌曲ID，如果未找到则返回None
@@ -73,13 +74,98 @@ class SpotifyClient:
         song_name = self._clean_text(song_name)
         artist = self._clean_text(artist)
         
-        # 尝试多种搜索策略
-        track_id = self._try_search_strategies(song_name, artist)
-        if track_id:
-            return track_id
+        if interactive:
+            # 获取多个搜索结果
+            results = self.get_search_results(song_name, artist, limit=5)
+            if results:
+                if len(results) == 1:
+                    # 只有一个结果，直接返回
+                    return results[0]['id']
+                
+                # 显示搜索结果
+                print(f"\n为 '{song_name}' {f'- {artist}' if artist else ''} 找到多个结果:")
+                for i, track in enumerate(results):
+                    print(f"{i+1}. {track['name']} - {track['artists']} ({track['album']})")
+                
+                # 让用户选择
+                try:
+                    choice = input("\n请选择一个结果 (1-{0}), 或输入 'n' 跳过: ".format(len(results))).strip()
+                    if choice.lower() == 'n':
+                        return None
+                    
+                    choice_idx = int(choice) - 1
+                    if 0 <= choice_idx < len(results):
+                        return results[choice_idx]['id']
+                    else:
+                        print("无效的选择，跳过此歌曲")
+                        return None
+                except ValueError:
+                    print("无效的输入，跳过此歌曲")
+                    return None
+            return None
+        else:
+            # 使用原有的非交互式搜索
+            # 尝试多种搜索策略
+            track_id = self._try_search_strategies(song_name, artist)
+            if track_id:
+                return track_id
+                
+            # 如果所有策略都失败，返回None
+            return None
+    
+    def get_search_results(self, song_name: str, artist: str = "", limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        获取多个搜索结果
+        
+        Args:
+            song_name: 歌曲名称
+            artist: 艺术家名称（可选）
+            limit: 返回结果数量限制
             
-        # 如果所有策略都失败，返回None
-        return None
+        Returns:
+            搜索结果列表，每个结果包含id、name、artists和album信息
+        """
+        if not song_name:
+            return []
+        
+        # 构建搜索查询
+        query = song_name
+        if artist:
+            query += f" {artist}"
+        
+        try:
+            # 搜索歌曲
+            results = self.sp.search(q=query, type='track', limit=limit)
+            tracks = results['tracks']['items']
+            
+            if not tracks:
+                return []
+            
+            # 格式化结果
+            formatted_results = []
+            for track in tracks:
+                formatted_results.append({
+                    'id': track['id'],
+                    'name': track['name'],
+                    'artists': ", ".join([a['name'] for a in track['artists']]),
+                    'album': track['album']['name'],
+                    'popularity': track['popularity'],
+                    'url': track['external_urls']['spotify']
+                })
+            
+            # 如果有艺术家名，计算相似度并排序
+            if artist:
+                for result in formatted_results:
+                    name_similarity = SequenceMatcher(None, song_name.lower(), result['name'].lower()).ratio()
+                    artist_similarity = SequenceMatcher(None, artist.lower(), result['artists'].lower()).ratio()
+                    result['score'] = name_similarity * 0.7 + artist_similarity * 0.3
+                
+                formatted_results.sort(key=lambda x: x['score'], reverse=True)
+            
+            return formatted_results
+            
+        except Exception:
+            return []
     
     def _clean_text(self, text: str) -> str:
         """

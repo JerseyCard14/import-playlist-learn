@@ -20,6 +20,7 @@ def parse_arguments():
     parser.add_argument('--verbose', '-v', action='store_true', help='显示详细信息')
     parser.add_argument('--preview', '-P', action='store_true', help='导入前预览歌曲列表')
     parser.add_argument('--no-preview', action='store_true', help='跳过预览直接导入')
+    parser.add_argument('--interactive', '-i', action='store_true', help='启用交互式搜索（允许用户选择搜索结果）')
     return parser.parse_args()
 
 
@@ -124,7 +125,7 @@ def display_preview(songs: List[Dict[str, Any]], playlist_name: str, spotify_cli
                         artist = song.get('artist', '')
                         
                         print(f"\n正在搜索: {song_name} - {artist}")
-                        track_id = spotify_client.search_track(song_name, artist)
+                        track_id = spotify_client.search_track(song_name, artist, interactive=True)
                         
                         if track_id:
                             # 获取歌曲详情
@@ -216,22 +217,28 @@ def main():
         track_ids = []
         not_found = []
         
-        for song in tqdm(songs, desc="处理歌曲"):
+        # 使用tqdm创建进度条，但在交互式模式下禁用
+        progress_bar = songs if args.interactive else tqdm(songs, desc="处理歌曲")
+        
+        for song in progress_bar:
             song_name = song.get('song_name', '')
             artist = song.get('artist', '')
             
             if not song_name:
                 continue
             
-            track_id = spotify_client.search_track(song_name, artist)
+            if args.interactive:
+                print(f"\n正在搜索: {song_name} - {artist}")
+            
+            track_id = spotify_client.search_track(song_name, artist, interactive=args.interactive)
             
             if track_id:
                 track_ids.append(track_id)
-                if args.verbose:
+                if args.verbose or args.interactive:
                     print(f"找到: {song_name} - {artist}")
             else:
                 not_found.append(f"{song_name} - {artist}")
-                if args.verbose:
+                if args.verbose or args.interactive:
                     print(f"未找到: {song_name} - {artist}")
         
         # 添加歌曲到播放列表
