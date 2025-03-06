@@ -18,10 +18,17 @@
 ## 安装与使用
 
 1. 克隆此仓库
-2. 安装依赖: `pip install -r requirements.txt`
-3. 在 Spotify 开发者平台创建应用并获取 API 凭证
-4. 配置 `.env` 文件，添加您的 Spotify API 凭证
-5. 运行程序: `python import_playlist.py your_playlist.xls`
+2. 创建并激活虚拟环境:
+   ```
+   python -m venv venv
+   source venv/bin/activate  # 在 Linux/macOS 上
+   # 或
+   venv\Scripts\activate  # 在 Windows 上
+   ```
+3. 安装依赖: `pip install -r requirements.txt`
+4. 在 Spotify 开发者平台创建应用并获取 API 凭证
+5. 配置 `.env` 文件，添加您的 Spotify API 凭证
+6. 运行程序: `python import_playlist.py your_playlist.xls`
 
 ## 项目结构
 
