@@ -3,6 +3,7 @@ import os
 import sys
 import argparse
 import time
+import json
 from typing import List, Dict, Any
 from tqdm import tqdm
 
@@ -23,7 +24,41 @@ def parse_arguments():
     parser.add_argument('--interactive', '-i', action='store_true', help='启用交互式搜索（允许用户选择搜索结果）')
     parser.add_argument('--existing', '-e', help='导入到现有播放列表的ID（可选）')
     parser.add_argument('--cover', '-c', help='设置播放列表封面图片的文件路径（可选，JPEG格式）')
+    parser.add_argument('--column-mapping', '-m', help='列映射JSON字符串或文件路径，例如：\'{"歌曲":"song_name", "歌手":"artist"}\'')
+    parser.add_argument('--skip-rows', '-sr', type=int, help='跳过文件开头的行数（仅适用于Excel和CSV）')
+    parser.add_argument('--skip-empty', '-se', action='store_true', help='跳过空行或缺少必要信息的行')
+    parser.add_argument('--multi-song-separator', '-ms', help='多首歌曲分隔符（用于处理一行包含多首歌曲的情况）')
     return parser.parse_args()
+
+
+def load_column_mapping(mapping_str: str) -> Dict[str, str]:
+    """
+    加载列映射
+    
+    Args:
+        mapping_str: 列映射JSON字符串或文件路径
+        
+    Returns:
+        列映射字典
+    """
+    if not mapping_str:
+        return None
+        
+    # 检查是否是文件路径
+    if os.path.exists(mapping_str):
+        try:
+            with open(mapping_str, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"无法加载列映射文件: {str(e)}")
+            return None
+    
+    # 尝试解析JSON字符串
+    try:
+        return json.loads(mapping_str)
+    except Exception as e:
+        print(f"无法解析列映射JSON: {str(e)}")
+        return None
 
 
 def select_playlist(spotify_client: SpotifyClient) -> str:
@@ -218,11 +253,27 @@ def main():
         print(f"错误: 封面图片文件 '{args.cover}' 不存在")
         sys.exit(1)
     
+    # 加载列映射
+    column_mapping = None
+    if args.column_mapping:
+        column_mapping = load_column_mapping(args.column_mapping)
+        if column_mapping and args.verbose:
+            print(f"使用列映射: {column_mapping}")
+    
     try:
         # 获取适合的文件读取器
         print(f"正在读取文件 '{args.file}'...")
         try:
-            reader = get_reader(args.file)
+            reader_options = {
+                'column_mapping': column_mapping,
+                'skip_rows': args.skip_rows,
+                'skip_empty': args.skip_empty,
+                'multi_song_separator': args.multi_song_separator
+            }
+            # 移除None值
+            reader_options = {k: v for k, v in reader_options.items() if v is not None}
+            
+            reader = get_reader(args.file, **reader_options)
         except ValueError as e:
             print(f"错误: {str(e)}")
             sys.exit(1)

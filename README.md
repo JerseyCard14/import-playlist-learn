@@ -18,6 +18,11 @@
 - 交互式搜索，允许用户选择最佳匹配结果
 - 导入前预览和编辑歌曲列表
 - 搜索歌曲并添加到播放列表中
+- 灵活处理非标准格式的文件:
+  - 自定义列映射
+  - 跳过文件开头的行数
+  - 跳过空行或缺少必要信息的行
+  - 自定义多首歌曲分隔符
 
 ## 技术栈
 
@@ -45,7 +50,7 @@
 ### 导入播放列表命令行选项
 
 ```
-usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] [--preview] [--no-preview] [--interactive] [--existing EXISTING] [--cover COVER] file
+usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] [--preview] [--no-preview] [--interactive] [--existing EXISTING] [--cover COVER] [--column-mapping COLUMN_MAPPING] [--skip-rows SKIP_ROWS] [--skip-empty] [--multi-song-separator MULTI_SONG_SEPARATOR] file
 
 将播放列表文件导入到Spotify
 
@@ -66,6 +71,13 @@ optional arguments:
                         导入到现有播放列表的ID（可选）
   --cover COVER, -c COVER
                         设置播放列表封面图片的文件路径（可选，JPEG格式）
+  --column-mapping COLUMN_MAPPING, -m COLUMN_MAPPING
+                        列映射JSON字符串或文件路径，例如：'{"歌曲":"song_name", "歌手":"artist"}'
+  --skip-rows SKIP_ROWS, -sr SKIP_ROWS
+                        跳过文件开头的行数（仅适用于Excel和CSV）
+  --skip-empty, -se     跳过空行或缺少必要信息的行
+  --multi-song-separator MULTI_SONG_SEPARATOR, -ms MULTI_SONG_SEPARATOR
+                        多首歌曲分隔符（用于处理一行包含多首歌曲的情况）
 ```
 
 ### 导出播放列表命令行选项
@@ -121,6 +133,50 @@ optional arguments:
 ### 设置播放列表封面图片
 
 使用 `--cover` 或 `-c` 选项指定JPEG格式的图片文件路径，程序会将其设置为播放列表的封面图片。
+
+### 处理非标准格式的文件
+
+程序提供了多种选项来处理包含额外数据或非标准格式的文件：
+
+#### 列映射
+
+使用 `--column-mapping` 或 `-m` 选项指定列映射，将文件中的自定义列名映射到标准列名：
+
+```
+python import_playlist.py playlist.xlsx -m '{"歌曲":"song_name", "歌手":"artist"}'
+```
+
+您也可以将列映射保存在JSON文件中，然后通过文件路径指定：
+
+```
+python import_playlist.py playlist.xlsx -m column_mapping.json
+```
+
+#### 跳过行
+
+使用 `--skip-rows` 或 `-sr` 选项跳过文件开头的行数，适用于包含标题或说明的文件：
+
+```
+python import_playlist.py playlist.xlsx -sr 2
+```
+
+#### 跳过空行
+
+使用 `--skip-empty` 或 `-se` 选项跳过空行或缺少必要信息的行：
+
+```
+python import_playlist.py playlist.xlsx -se
+```
+
+#### 多首歌曲分隔符
+
+使用 `--multi-song-separator` 或 `-ms` 选项指定多首歌曲分隔符，用于处理一行包含多首歌曲的情况：
+
+```
+python import_playlist.py playlist.xlsx -ms "/"
+```
+
+例如，如果文件中有一行包含 "Shape of You / Perfect"，程序会将其解析为两首歌曲。
 
 ### 导出播放列表
 
@@ -227,5 +283,6 @@ import-playlist-learn/
 - [x] 支持导入到现有播放列表
 - [x] 支持设置播放列表封面图片
 - [x] 支持导出Spotify播放列表到Excel
+- [x] 增强对非标准格式文件的处理
 - [ ] 添加用户界面（可选）
 - [ ] 添加单元测试
