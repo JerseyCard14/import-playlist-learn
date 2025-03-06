@@ -10,7 +10,8 @@
   - JSON 文件 (.json)
   - 文本文件 (.txt)
 - 连接到 Spotify API
-- 在 Spotify 中创建新播放列表
+- 在 Spotify 中创建新播放列表（公开或私有）
+- 使用增强的搜索算法查找歌曲
 - 搜索歌曲并添加到播放列表中
 
 ## 技术栈
@@ -19,6 +20,7 @@
 - pandas/openpyxl (Excel/CSV 处理)
 - spotipy (Spotify API Python 客户端)
 - json (JSON 处理)
+- difflib (模糊匹配)
 
 ## 安装与使用
 
@@ -34,6 +36,46 @@
 4. 在 Spotify 开发者平台创建应用并获取 API 凭证
 5. 配置 `.env` 文件，添加您的 Spotify API 凭证
 6. 运行程序: `python import_playlist.py your_playlist.xlsx`
+
+### 命令行选项
+
+```
+usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] file
+
+将播放列表文件导入到Spotify
+
+positional arguments:
+  file                  播放列表文件路径 (支持 Excel, CSV, JSON, TXT 格式)
+
+optional arguments:
+  -h, --help            显示帮助信息并退出
+  --name NAME, -n NAME  播放列表名称（可选，默认使用文件中的名称或文件名）
+  --description DESCRIPTION, -d DESCRIPTION
+                        播放列表描述（可选）
+  --private, -p         创建私有播放列表（默认为公开）
+  --verbose, -v         显示详细信息
+```
+
+### 测试搜索功能
+
+您可以使用 `test_search.py` 脚本测试增强的搜索功能:
+
+```
+python test_search.py "歌曲名" --artist "艺术家名" --verbose
+```
+
+## 增强的搜索算法
+
+本工具使用多种搜索策略来提高歌曲匹配率:
+
+1. **文本清理和标准化** - 移除括号内容、特殊字符和多余空格
+2. **多策略搜索** - 按顺序尝试多种搜索方法:
+   - 精确搜索 (歌曲名 + 艺术家)
+   - 仅歌曲名搜索
+   - 关键词搜索 (不使用field限定符)
+   - 分词搜索 (处理歌曲名可能包含艺术家的情况)
+   - 模糊匹配搜索 (获取多个结果并比较相似度)
+3. **相似度评分** - 使用序列匹配算法计算相似度得分
 
 ## 支持的文件格式
 
@@ -80,6 +122,7 @@ import-playlist-learn/
 ├── spotify_client.py     # Spotify API 客户端
 ├── file_reader.py        # 文件读取器
 ├── create_examples.py    # 示例文件生成器
+├── test_search.py        # 搜索功能测试工具
 ├── examples/             # 示例文件目录
 ├── requirements.txt      # 项目依赖
 └── README.md             # 项目说明
@@ -93,5 +136,7 @@ import-playlist-learn/
 - [x] 实现歌曲搜索和添加
 - [x] 添加错误处理
 - [x] 支持更多文件格式（CSV、JSON、TXT）
+- [x] 实现模糊匹配搜索算法
+- [x] 添加私有/公开播放列表选项
 - [ ] 添加用户界面（可选）
 - [ ] 添加单元测试

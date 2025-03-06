@@ -15,6 +15,8 @@ def parse_arguments():
     parser.add_argument('file', help='播放列表文件路径 (支持 Excel, CSV, JSON, TXT 格式)')
     parser.add_argument('--name', '-n', help='播放列表名称（可选，默认使用文件中的名称或文件名）')
     parser.add_argument('--description', '-d', help='播放列表描述（可选）')
+    parser.add_argument('--private', '-p', action='store_true', help='创建私有播放列表（默认为公开）')
+    parser.add_argument('--verbose', '-v', action='store_true', help='显示详细信息')
     return parser.parse_args()
 
 
@@ -59,8 +61,8 @@ def main():
         spotify_client = SpotifyClient()
         
         # 创建播放列表
-        print(f"正在创建播放列表 '{playlist_name}'...")
-        playlist_id = spotify_client.create_playlist(playlist_name, playlist_description)
+        print(f"正在创建{'私有' if args.private else '公开'}播放列表 '{playlist_name}'...")
+        playlist_id = spotify_client.create_playlist(playlist_name, playlist_description, not args.private)
         
         # 搜索并添加歌曲
         print("正在搜索歌曲...")
@@ -78,14 +80,19 @@ def main():
             
             if track_id:
                 track_ids.append(track_id)
+                if args.verbose:
+                    print(f"找到: {song_name} - {artist}")
             else:
                 not_found.append(f"{song_name} - {artist}")
+                if args.verbose:
+                    print(f"未找到: {song_name} - {artist}")
         
         # 添加歌曲到播放列表
         if track_ids:
             print(f"正在将 {len(track_ids)} 首歌曲添加到播放列表...")
             spotify_client.add_tracks_to_playlist(playlist_id, track_ids)
             print("完成!")
+            print(f"成功率: {len(track_ids)}/{len(songs)} ({len(track_ids)/len(songs)*100:.1f}%)")
         else:
             print("没有找到任何歌曲")
         
