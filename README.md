@@ -24,6 +24,11 @@
   - 跳过空行或缺少必要信息的行
   - 自定义多首歌曲分隔符
 
+## 文档
+
+- [用户指南](docs/USER_GUIDE.md) - 详细的功能使用说明、示例和最佳实践
+- [改进计划](IMPROVEMENT_PLAN.md) - 项目的改进计划和待办事项
+
 ## 技术栈
 
 - Python
@@ -47,211 +52,7 @@
 5. 配置 `.env` 文件，添加您的 Spotify API 凭证
 6. 运行程序: `python import_playlist.py your_playlist.xlsx`
 
-### 导入播放列表命令行选项
-
-```
-usage: import_playlist.py [-h] [--name NAME] [--description DESCRIPTION] [--private] [--verbose] [--preview] [--no-preview] [--interactive] [--existing EXISTING] [--cover COVER] [--column-mapping COLUMN_MAPPING] [--skip-rows SKIP_ROWS] [--skip-empty] [--multi-song-separator MULTI_SONG_SEPARATOR] file
-
-将播放列表文件导入到Spotify
-
-positional arguments:
-  file                  播放列表文件路径 (支持 Excel, CSV, JSON, TXT 格式)
-
-optional arguments:
-  -h, --help            显示帮助信息并退出
-  --name NAME, -n NAME  播放列表名称（可选，默认使用文件中的名称或文件名）
-  --description DESCRIPTION, -d DESCRIPTION
-                        播放列表描述（可选）
-  --private, -p         创建私有播放列表（默认为公开）
-  --verbose, -v         显示详细信息
-  --preview, -P         导入前预览歌曲列表
-  --no-preview          跳过预览直接导入
-  --interactive, -i     启用交互式搜索（允许用户选择搜索结果）
-  --existing EXISTING, -e EXISTING
-                        导入到现有播放列表的ID（可选）
-  --cover COVER, -c COVER
-                        设置播放列表封面图片的文件路径（可选，JPEG格式）
-  --column-mapping COLUMN_MAPPING, -m COLUMN_MAPPING
-                        列映射JSON字符串或文件路径，例如：'{"歌曲":"song_name", "歌手":"artist"}'
-  --skip-rows SKIP_ROWS, -sr SKIP_ROWS
-                        跳过文件开头的行数（仅适用于Excel和CSV）
-  --skip-empty, -se     跳过空行或缺少必要信息的行
-  --multi-song-separator MULTI_SONG_SEPARATOR, -ms MULTI_SONG_SEPARATOR
-                        多首歌曲分隔符（用于处理一行包含多首歌曲的情况）
-```
-
-### 导出播放列表命令行选项
-
-```
-usage: export_playlist.py [-h] [--output OUTPUT] [--id ID]
-
-将Spotify播放列表导出到Excel文件
-
-optional arguments:
-  -h, --help            显示帮助信息并退出
-  --output OUTPUT, -o OUTPUT
-                        输出文件路径（可选，默认为"playlist_名称.xlsx"）
-  --id ID, -i ID        播放列表ID（可选，如果不提供则显示用户的播放列表列表）
-```
-
-### 预览功能
-
-当歌曲数量超过5首时，程序默认会显示预览界面，您可以在导入前查看和编辑歌曲列表：
-
-- 查看所有歌曲
-- 删除不需要的歌曲
-- 添加新歌曲
-- 编辑现有歌曲
-- 测试搜索特定歌曲
-
-您也可以使用 `--preview` 选项强制显示预览，或使用 `--no-preview` 选项跳过预览直接导入。
-
-### 交互式搜索
-
-使用 `--interactive` 或 `-i` 选项启用交互式搜索功能。当搜索歌曲时，如果找到多个匹配结果，程序会显示这些结果并让您选择最合适的一个：
-
-```
-为 'Shape of You' - Ed Sheeran 找到多个结果:
-1. Shape of You - Ed Sheeran (÷ (Deluxe))
-2. Shape of You - Ed Sheeran (÷)
-3. Shape of You - Ed Sheeran (Shape of You)
-4. Shape of You - Acoustic - Ed Sheeran (Shape of You (Acoustic))
-5. Shape of You - Major Lazer Remix - Ed Sheeran (Shape of You (Major Lazer Remix))
-
-请选择一个结果 (1-5), 或输入 'n' 跳过:
-```
-
-这对于处理有多个版本的歌曲或名称相似的歌曲特别有用。
-
-### 导入到现有播放列表
-
-您可以通过以下方式将歌曲导入到现有播放列表：
-
-1. 使用 `--existing` 或 `-e` 选项指定播放列表ID
-2. 在导入过程中选择"是"，然后从列表中选择一个播放列表
-
-### 设置播放列表封面图片
-
-使用 `--cover` 或 `-c` 选项指定JPEG格式的图片文件路径，程序会将其设置为播放列表的封面图片。
-
-### 处理非标准格式的文件
-
-程序提供了多种选项来处理包含额外数据或非标准格式的文件：
-
-#### 列映射
-
-使用 `--column-mapping` 或 `-m` 选项指定列映射，将文件中的自定义列名映射到标准列名：
-
-```
-python import_playlist.py playlist.xlsx -m '{"歌曲":"song_name", "歌手":"artist"}'
-```
-
-您也可以将列映射保存在JSON文件中，然后通过文件路径指定：
-
-```
-python import_playlist.py playlist.xlsx -m column_mapping.json
-```
-
-#### 跳过行
-
-使用 `--skip-rows` 或 `-sr` 选项跳过文件开头的行数，适用于包含标题或说明的文件：
-
-```
-python import_playlist.py playlist.xlsx -sr 2
-```
-
-#### 跳过空行
-
-使用 `--skip-empty` 或 `-se` 选项跳过空行或缺少必要信息的行：
-
-```
-python import_playlist.py playlist.xlsx -se
-```
-
-#### 多首歌曲分隔符
-
-使用 `--multi-song-separator` 或 `-ms` 选项指定多首歌曲分隔符，用于处理一行包含多首歌曲的情况：
-
-```
-python import_playlist.py playlist.xlsx -ms "/"
-```
-
-例如，如果文件中有一行包含 "Shape of You / Perfect"，程序会将其解析为两首歌曲。
-
-### 导出播放列表
-
-使用 `export_playlist.py` 脚本可以将Spotify播放列表导出到Excel文件：
-
-```
-python export_playlist.py
-```
-
-如果不提供播放列表ID，程序会显示您的播放列表列表，让您选择一个要导出的播放列表。
-
-### 测试搜索功能
-
-您可以使用 `test_search.py` 脚本测试增强的搜索功能:
-
-```
-python test_search.py "歌曲名" --artist "艺术家名" --verbose
-```
-
-或者使用交互式搜索:
-
-```
-python test_search.py "歌曲名" --artist "艺术家名" --interactive
-```
-
-## 增强的搜索算法
-
-本工具使用多种搜索策略来提高歌曲匹配率:
-
-1. **文本清理和标准化** - 移除括号内容、特殊字符和多余空格
-2. **多策略搜索** - 按顺序尝试多种搜索方法:
-   - 精确搜索 (歌曲名 + 艺术家)
-   - 仅歌曲名搜索
-   - 关键词搜索 (不使用field限定符)
-   - 分词搜索 (处理歌曲名可能包含艺术家的情况)
-   - 模糊匹配搜索 (获取多个结果并比较相似度)
-3. **相似度评分** - 使用序列匹配算法计算相似度得分
-4. **用户选择** - 在交互式模式下，允许用户从多个搜索结果中选择最佳匹配
-
-## 支持的文件格式
-
-### Excel 文件 (.xlsx, .xls, .xlsm)
-需要包含 `song_name` 和 `artist` 列。
-
-### CSV 文件 (.csv)
-需要包含 `song_name` 和 `artist` 列。
-
-### JSON 文件 (.json)
-支持两种格式:
-1. 歌曲列表格式:
-   ```json
-   [
-     {"song_name": "歌曲1", "artist": "艺术家1"},
-     {"song_name": "歌曲2", "artist": "艺术家2"}
-   ]
-   ```
-
-2. 对象格式:
-   ```json
-   {
-     "name": "播放列表名称",
-     "songs": [
-       {"song_name": "歌曲1", "artist": "艺术家1"},
-       {"song_name": "歌曲2", "artist": "艺术家2"}
-     ]
-   }
-   ```
-
-### 文本文件 (.txt)
-每行一首歌，格式为 `歌曲名 - 艺术家`。
-第一行如果以 `# ` 开头，将被视为播放列表名称。
-
-## 生成示例文件
-
-运行 `python create_examples.py` 可以生成各种格式的示例文件，用于测试。
+更多详细使用说明，请参阅[用户指南](docs/USER_GUIDE.md)。
 
 ## 项目结构
 
@@ -264,7 +65,10 @@ import-playlist-learn/
 ├── create_examples.py    # 示例文件生成器
 ├── test_search.py        # 搜索功能测试工具
 ├── examples/             # 示例文件目录
+├── docs/                 # 文档目录
+│   └── USER_GUIDE.md     # 用户指南
 ├── requirements.txt      # 项目依赖
+├── IMPROVEMENT_PLAN.md   # 改进计划
 └── README.md             # 项目说明
 ```
 
