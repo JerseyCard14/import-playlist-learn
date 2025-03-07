@@ -28,6 +28,9 @@ def parse_arguments():
     parser.add_argument('--skip-rows', '-sr', type=int, help='跳过文件开头的行数（仅适用于Excel和CSV）')
     parser.add_argument('--skip-empty', '-se', action='store_true', help='跳过空行或缺少必要信息的行')
     parser.add_argument('--multi-song-separator', '-ms', help='多首歌曲分隔符（用于处理一行包含多首歌曲的情况）')
+    parser.add_argument('--artist-column', '-ac', help='指定歌手列的名称（用于多列格式的表格）')
+    parser.add_argument('--song-columns', '-sc', help='指定歌曲列的名称，多个列名用逗号分隔（用于多列格式的表格）')
+    parser.add_argument('--count-column', '-cc', help='指定数量列的名称，用于确定每行实际的歌曲数量（用于多列格式的表格）')
     return parser.parse_args()
 
 
@@ -260,6 +263,19 @@ def main():
         if column_mapping and args.verbose:
             print(f"使用列映射: {column_mapping}")
     
+    # 处理歌手列和歌曲列参数
+    artist_column = args.artist_column
+    song_columns = None
+    if args.song_columns:
+        song_columns = [col.strip() for col in args.song_columns.split(',')]
+        if args.verbose:
+            print(f"使用歌曲列: {song_columns}")
+    
+    # 处理数量列参数
+    count_column = args.count_column
+    if count_column and args.verbose:
+        print(f"使用数量列: {count_column}")
+    
     try:
         # 获取适合的文件读取器
         print(f"正在读取文件 '{args.file}'...")
@@ -268,7 +284,10 @@ def main():
                 'column_mapping': column_mapping,
                 'skip_rows': args.skip_rows,
                 'skip_empty': args.skip_empty,
-                'multi_song_separator': args.multi_song_separator
+                'multi_song_separator': args.multi_song_separator,
+                'artist_column': artist_column,
+                'song_columns': song_columns,
+                'count_column': count_column
             }
             # 移除None值
             reader_options = {k: v for k, v in reader_options.items() if v is not None}
